@@ -1,35 +1,29 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .serializers import WeatherSerializer, ResponseSerializer
+from .serializers import ResponseSerializer, RequestSerializer
 from .services import *
 
 
 @api_view(['POST'])
 def weather_json(request):
-    weather_serializer = WeatherSerializer(data=request.data)
+    request_serializer = RequestSerializer(data=request.data, many=True)
 
-    if weather_serializer.is_valid():
-        data = weather_serializer.validated_data
+    if request_serializer.is_valid():
+        data = request_serializer.validated_data
 
-        weather_input = weather_data_build(data)
-        events = get_request_events(request)
-        event_x_update(events)
+        response_form = []
+        weather_list = get_multi_doy(data)
+        events = get_request_events(data)
 
-        new_index = len(events)
-        new_event = event_create(weather_input, new_index)
+        get_response_info(response_form, weather_list, events)
 
-        if new_event:
-            events.append(new_event)
+        resp_serializer = ResponseSerializer(response_form, many=True)
 
-        resp_serializer = ResponseSerializer(
-            {
-                "doy": weather_input.doy,
-                "events": events
-            }
-        )
+        save_response(resp_serializer)
+
         return Response(resp_serializer.data)
     else:
-        return Response(weather_serializer.errors)
+        return Response(request_serializer.errors)
 
 
