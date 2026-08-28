@@ -1,3 +1,5 @@
 from django.db import models
 
-# Create your models here.
+class WeatherResponse(models.Model):
+    doy = models.IntegerField()
+    events = models.JSONField()
